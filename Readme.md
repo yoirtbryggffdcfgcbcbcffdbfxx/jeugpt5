@@ -1,6 +1,6 @@
 # Plateformer ASCII – Cavern Edition
 
-Un petit moteur de plateformer 2D en JS/Canvas, ambiance grotte réaliste:
+Un petit moteur de plateformer 2D en JS/Canvas, ambiance grotte réaliste: mode test
 - Carte ASCII (fichiers texte)
 - Éclairage local (halo) avec occlusion (murs/portes) et noir total hors lumière
 - Mur de roche procédural avec léger parallax (visible uniquement dans la lumière)
