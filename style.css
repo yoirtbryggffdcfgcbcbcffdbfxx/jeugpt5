@@ -1,0 +1,242 @@
+:root { --bg-sky: #dfe9ff; }
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg-sky);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* Conteneur du jeu (canvas + UI) */
+#gameRoot {
+  position: relative;
+  width: 1200px;   /* taille fenêtre par défaut */
+  height: 600px;
+  margin: 0 auto;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  border-radius: 12px;
+  overflow: hidden; /* masque le panel dans le cadre */
+  background: #eef; /* fallback si rien ne s’affiche */
+}
+
+/* Plein écran sur le conteneur */
+#gameRoot:fullscreen,
+#gameRoot:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Le canvas remplit toujours le conteneur */
+#gameCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* HUD */
+.ui-top-left, .ui-top-right {
+  position: absolute;  /* dans le conteneur */
+  top: 10px;
+  z-index: 10;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+  user-select: none;
+  pointer-events: none;
+}
+.ui-top-left { left: 14px; }
+.ui-top-right { right: 14px; text-align: right; }
+
+.hud-controls { font-weight: 600; opacity: 0.9; }
+.hud-level { opacity: 0.9; margin-top: 6px; }
+
+.hud { display: inline-flex; gap: 10px; margin-right: 10px; pointer-events: none; }
+.hud-item { background: rgba(0,0,0,0.18); padding: 6px 8px; border-radius: 8px; }
+
+.buttons { display: inline-flex; gap: 8px; pointer-events: auto; }
+.buttons button {
+  appearance: none; border: none; padding: 8px 12px; border-radius: 8px;
+  background: rgba(255,255,255,0.88); color: #222; font-weight: 700; cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  backdrop-filter: blur(6px);
+}
+.buttons button:hover { background: #fff; }
+
+/* Panel overlay dans le conteneur */
+.panel {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: grid; place-items: center; z-index: 20;
+}
+.panel.hidden { display: none; }
+.panel-content {
+  min-width: 320px; max-width: 520px;
+  background: rgba(255,255,255,0.9);
+  padding: 20px; border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  text-align: center;
+}
+.panel-actions { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+.panel-actions button {
+  appearance: none; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer;
+}
+.panel-actions button:hover { filter: brightness(1.05); }
+#btnNext.hidden { display: none; }
+
+/* ------- Overlay "Nom de checkpoint" (style Hollow Knight-like) ------- */
+.hidden { display: none !important; }
+
+.discovery {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 30;
+}
+
+/* Nom : très grand, capitales élégantes, contour noir, halo léger */
+.discovery-name {
+  font-family: "Cinzel Decorative", "Cinzel", serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+
+  /* Taille réduite de 50% */
+  font-size: clamp(28px, 5vw, 90px);
+  line-height: 1.06;
+  color: #fff;
+
+  /* Contour ajusté */
+  -webkit-text-stroke: 2px #000;
+  /* text-stroke is non-standard and removed for compatibility */
+
+  text-shadow:
+    2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000,
+    2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000,
+    0 0 20px rgba(0,0,0,0.35);
+
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+}
+
+/* Animations : 2s d’entrée, 2s de sortie */
+.discovery.discovery-in .discovery-name {
+  animation: discNameIn 2s ease-out forwards;
+}
+.discovery.discovery-out .discovery-name {
+  animation: discNameOut 2s ease-in forwards;
+}
+
+/* Keyframes */
+@keyframes discNameIn {
+  0%   { opacity: 0; transform: translateY(0) scale(0.96); }
+  100% { opacity: 1; transform: translateY(-8px) scale(1); }
+}
+@keyframes discNameOut {
+  0%   { opacity: 1; transform: translateY(-8px) scale(1); }
+  100% { opacity: 0; transform: translateY(-4px) scale(0.985); }
+}
+
+/* petit confort HUD */
+.hud-cp { opacity: 0.9; margin-top: 4px; }
+/* Icône pièces (HUD) */
+.coin-hud {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.coin-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25));
+}
+.coin-icon svg { width: 100%; height: 100%; display: block; }
+
+/* option: léger scintillement (désactivé par défaut)
+.coin-icon { animation: coinShine 2.8s ease-in-out infinite; }
+@keyframes coinShine {
+  0%, 100% { filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25)); }
+  50%      { filter: drop-shadow(0 2px 3px rgba(0,0,0,0.35)); }
+}
+*/
+
+/* ----- Loot toasts (haut gauche, sous le nom de checkpoint) ----- */
+.loot-toasts {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.loot-toast {
+  --accent: #ffd166; /* couleur par défaut (écrasée par JS) */
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 14px;
+  border-radius: 12px;
+
+  /* fond plus contrasté + léger dégradé */
+  background: linear-gradient(180deg, rgba(15,22,30,0.94) 0%, rgba(12,18,26,0.9) 100%);
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+  color: #fff;
+  backdrop-filter: blur(6px);
+
+  transform: translateY(-6px) scale(0.98);
+  opacity: 0;
+  animation: lootIn 260ms ease-out forwards;
+}
+
+/* barre d’accent à gauche */
+.loot-toast::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 6px; bottom: 6px;
+  width: 4px;
+  border-radius: 8px;
+  background: var(--accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent), transparent 60%);
+}
+
+.loot-toast .icon {
+  width: 22px; height: 22px;
+  display: inline-block;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.35));
+}
+.loot-toast .icon svg { width: 100%; height: 100%; display: block; }
+
+.loot-toast .label {
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+.loot-toast .count {
+  margin-left: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  font-weight: 800;
+}
+
+.loot-toast.out {
+  animation: lootOut 260ms ease-in forwards;
+}
+
+@keyframes lootIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)     scale(1); }
+}
+@keyframes lootOut {
+  from { opacity: 1; transform: translateY(0)     scale(1); }
+  to   { opacity: 0; transform: translateY(-8px)  scale(0.98); }
+}
+.hud-pos { opacity: 0.9; margin-top: 4px; }
